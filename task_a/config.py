@@ -19,3 +19,6 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 # Dataset
 DATASET_PATH = os.getenv("DATASET_PATH", "data/amazon_reviews.json")
+
+HF_TOKEN = os.getenv("HF_TOKEN")
+HF_DATASET_REPO = os.getenv("HF_DATASET_REPO")

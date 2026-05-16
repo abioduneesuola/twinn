@@ -13,6 +13,8 @@ import uvicorn
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("🚀 Twinn Review API starting...")
+    from src.dataset_loader import ensure_dataset_available
+    ensure_dataset_available()
     yield
 
 
