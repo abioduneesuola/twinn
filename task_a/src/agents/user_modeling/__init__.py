@@ -92,7 +92,7 @@ Extract the following and respond in exact JSON format with no extra text:
 
     try:
         response = client.chat.completions.create(
-            model="gpt-oss-120b",
+            model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.1 
         )
