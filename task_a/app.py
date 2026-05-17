@@ -1,7 +1,8 @@
 import streamlit as st
 import requests
 
-API_URL = "http://localhost:8001"
+import os
+API_URL = os.getenv("API_URL", "http://localhost:8001")
 
 st.set_page_config(
     page_title="Twinn Review Simulator — Task A",
