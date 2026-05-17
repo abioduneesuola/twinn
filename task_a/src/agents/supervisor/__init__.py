@@ -19,7 +19,7 @@ def run_task_a(user_id: str, n_products: int = 3) -> dict:
     print("\n📊 Step 1: Building user profile...")
     profile = get_or_build_profile(user_id)
     if not profile:
-        return {"error": f"No reviews found for user {user_id}"}
+        return {"error": f"The reviews written by user: {user_id} are not rich enough in context, please select another user"}
     print(f"✅ Profile: {profile.get('tone')} | {profile.get('rating_pattern')}")
 
     # Step 2: Get unseen products
