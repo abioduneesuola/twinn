@@ -11,12 +11,15 @@ COHERE_API_KEY = os.getenv("COHERE_API_KEY")
 
 # Vector DB
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
-PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", "twinn-recommend")
+PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", "task-b-recommend")
 
 # Database
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 # Datasets
-YELP_DATASET_PATH = os.getenv("YELP_DATASET_PATH", "data/yelp_reviews.json")
+YELP_DATASET_PATH = os.getenv("YELP_DATASET_PATH", "data/reviews_enriched_price.jsonl")
 GOODREADS_DATASET_PATH = os.getenv("GOODREADS_DATASET_PATH", "data/goodreads_reviews.json")
+
+HF_TOKEN = os.getenv("HF_TOKEN")
+HF_DATASET_REPO = os.getenv("HF_DATASET_REPO")
