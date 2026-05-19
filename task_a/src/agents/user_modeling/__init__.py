@@ -2,6 +2,10 @@ import json
 import gzip
 from groq import Groq
 from supabase import create_client
+import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from config import GROQ_API_KEY, SUPABASE_URL, SUPABASE_KEY, DATASET_PATH
 
 client = Groq(api_key=GROQ_API_KEY)
@@ -49,9 +53,7 @@ def get_sample_users(n: int = 5) -> list[str]:
                 if len(text) >= 50:
                     user_review_counts[uid] = user_review_counts.get(uid, 0) + 1
 
-        # Only users with 5+ reviews that ALL pass 50-char threshold
         quality_users = [uid for uid, count in user_review_counts.items() if count >= 5]
-
         sample = random.sample(quality_users, min(n, len(quality_users)))
         print(f"✅ {len(quality_users)} quality users available, returning {len(sample)}")
         return sample
@@ -94,14 +96,16 @@ Extract the following and respond in exact JSON format with no extra text:
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.1 
+            temperature=0.1
         )
         content = response.choices[0].message.content.strip()
+        # Strip markdown code blocks
         if content.startswith("```"):
             content = content.split("```")[1]
             if content.startswith("json"):
                 content = content[4:]
         content = content.strip().replace("```", "").strip()
+        # NEW: Extract JSON object even if wrapped in extra text
         start = content.find("{")
         end = content.rfind("}") + 1
         if start != -1 and end != 0:
@@ -145,7 +149,7 @@ def get_or_build_profile(user_id: str) -> dict:
     print(f"🔍 Building profile for: {user_id}")
     reviews = load_user_reviews(user_id)
     if not reviews:
-        print(f"The reviews written by user: {user_id} are not rich enough in context, please select another user")
+        print(f"❌ No reviews found for user: {user_id}")
         return {}
 
     profile = build_user_profile(user_id, reviews)
