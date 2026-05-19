@@ -1,20 +1,25 @@
 import os
 import sys
+import json
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..'))
 
-import json
-import numpy as np
-from sentence_transformers import SentenceTransformer
 from pinecone import Pinecone
 from config import PINECONE_API_KEY, PINECONE_INDEX_NAME
 
-LOCAL_MODEL_PATH = os.getenv(
-    "EMBEDDING_MODEL_PATH",
-    r"C:\Users\USER\Desktop\HACKATHON\all-MiniLM-L6-v2"
-)
-
-model = SentenceTransformer(LOCAL_MODEL_PATH)
 pc = Pinecone(api_key=PINECONE_API_KEY)
+
+_model = None
+
+
+def get_model():
+    """Lazily loads the embedding model only when needed."""
+    global _model
+    if _model is None:
+        from sentence_transformers import SentenceTransformer
+        print("📥 Loading embedding model...")
+        _model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+        print("✅ Embedding model loaded")
+    return _model
 
 
 def get_index():
@@ -23,7 +28,7 @@ def get_index():
 
 def embed_query(text: str) -> list[float]:
     """Embeds a search query using the same model as indexing."""
-    return model.encode(text).tolist()
+    return get_model().encode(text).tolist()
 
 
 def retrieve_candidates(
@@ -69,7 +74,6 @@ def retrieve_for_user(profile: dict, top_k: int = 20) -> tuple[list[dict], str]:
     search_query = profile.get("search_query", "")
 
     if not search_query:
-        # Fallback: build query from profile fields
         parts = []
         if profile.get("favorite_categories"):
             parts.append(profile["favorite_categories"])
@@ -84,3 +88,9 @@ def retrieve_for_user(profile: dict, top_k: int = 20) -> tuple[list[dict], str]:
     print(f"🔍 Query: {search_query}")
     candidates = retrieve_candidates(search_query, top_k=top_k)
     return candidates, reasoning
+
+
+# NOTE: This agent handles semantic search against the Pinecone business
+# index. It converts the user's profile into a search query, embeds it
+# using the same model used during indexing, and retrieves the most
+# semantically similar businesses as candidates for ranking.
