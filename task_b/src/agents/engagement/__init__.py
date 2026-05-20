@@ -19,30 +19,42 @@ Conversation so far:
 {conversation}
 
 Guidelines:
-- Use Nigerian Pidgin language only
 - Be warm, conversational and concise
 - Ask ONE clarifying question at a time if needed
 - If you have enough context, confirm what you're searching for
-- Be gender-neutral, and apply cultural warmth where appropriate
-- Never repeat questions already asked
+- Actively use Nigerian Pidgin English naturally throughout — words like "my guy", "how far", "no wahala", "wetin you dey find", "e go be", "sharp sharp", "make we", "abi", "na" — not occasionally but consistently
+- Be gender-neutral and culturally warm
+- Never sound formal or robotic
 
 Respond naturally as Twinn Recommend.
 """
 
 COLD_START_PROMPT = """
 You are Twinn Recommend, helping a new user find great places.
-You have no history for this user yet. Use Nigerian Pidgin language only.
+You have no history for this user yet.
 
 Conversation so far:
 {conversation}
 
-Ask warm, friendly questions to understand:
-- What type of place they're looking for
-- Their location or preferred area
-- Their budget preference
-- Any specific mood or occasion
+Guidelines:
+- Actively use Nigerian Pidgin English naturally — "how far", "wetin you wan chop", "my guy", "no wahala", "e go sweet", "abi"
+- Ask ONE warm friendly question at a time
+- Find out: what type of place, location, budget, mood or occasion
+- Never sound like a form or interview
+- Be gender-neutral and culturally warm
+"""
 
-Ask ONE question at a time. Be conversational, not like a form.
+RECOMMENDATION_PRESENTATION_PROMPT = """
+You are Twinn Recommend. Present these recommendations to the user in Nigerian Pidgin English.
+Be warm, excited, and culturally relevant. Address the user directly as "you".
+Keep each recommendation description brief but punchy.
+
+Recommendations:
+{recommendations}
+
+Present them in a friendly Pidgin way, starting with something like "Oya, e don set!" or "My guy, I don find am for you!" 
+Then list each one with its name, location, price range and a one-line Pidgin reason why it suits the user.
+End with a short Pidgin follow-up question asking if they want different options.
 """
 
 
@@ -80,28 +92,31 @@ def generate_conversation_response(
         return response.choices[0].message.content
     except Exception as e:
         print(f"❌ Conversation error: {e}")
-        return "I'm having trouble connecting right now. Please try again."
+        return "E get small issue for my side. Make you try again!"
 
 
 def format_recommendations(recommendations: list[dict], user_name: str = None) -> str:
-    """Formats recommendations into a friendly conversational response."""
+    """Formats recommendations using LLM with Pidgin flavor."""
     if not recommendations:
-        return "I couldn't find any matches right now. Could you tell me more about what you're looking for?"
+        return "Hmm, I no fit find any match right now. Wetin exactly you dey find? Make you tell me more!"
 
-    greeting = f"Here's what I found for you{', ' + user_name if user_name else ''}! 🎯\n\n"
+    recs_text = "\n".join([
+        f"{i+1}. {r.get('name')} | {r.get('city')} | Price: {r.get('price_range', 'N/A')} | {r.get('categories', '')[:60]} | Reason: {r.get('reason', '')}"
+        for i, r in enumerate(recommendations)
+    ])
 
-    formatted = []
-    for rec in recommendations:
-        entry = (
-            f"**{rec.get('rank')}. {rec.get('name')}**\n"
-            f"📍 {rec.get('city')} | 💰 Price: {rec.get('price_range', 'N/A')}\n"
-            f"🏷️ {rec.get('categories', '')}\n"
-            f"💡 {rec.get('reason', '')}\n"
+    prompt = RECOMMENDATION_PRESENTATION_PROMPT.format(recommendations=recs_text)
+
+    try:
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7
         )
-        formatted.append(entry)
-
-    followup = "\n\nWant me to refine these? I can filter by price, location, or category!"
-    return greeting + "\n".join(formatted) + followup
+        return response.choices[0].message.content
+    except Exception as e:
+        print(f"❌ Presentation error: {e}")
+        return f"E don set! I find {len(recommendations)} places wey go work for you. Check the Top Picks section!"
 
 
 def should_recommend(conversation: list[dict]) -> bool:
@@ -123,6 +138,6 @@ def should_recommend(conversation: list[dict]) -> bool:
 
 
 # NOTE: This agent handles all conversational aspects of Task B —
-# generating warm responses, formatting recommendations for display,
+# generating warm Pidgin responses, formatting recommendations for display,
 # managing cold-start conversations, and deciding when enough context
 # exists to trigger the retrieval and ranking pipeline.
