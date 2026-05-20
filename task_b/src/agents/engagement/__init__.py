@@ -52,7 +52,7 @@ Keep each recommendation description brief but punchy.
 Recommendations:
 {recommendations}
 
-Present them in a friendly Pidgin way 
+Present them in a friendly Pidgin way. Include all the icons used to denote each recommendation to take it colorful. 
 Then list each one with its name, location, price range and a one-line Pidgin reason why it suits the user.
 End with a short Pidgin follow-up question asking if they want different options.
 """
