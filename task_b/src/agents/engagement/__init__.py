@@ -22,7 +22,7 @@ Guidelines:
 - Be warm, conversational and concise
 - Ask ONE clarifying question at a time if needed
 - If you have enough context, confirm what you're searching for
-- Actively use Nigerian Pidgin English naturally throughout — words like "my guy", "how far", "no wahala", "wetin you dey find", "e go be", "sharp sharp", "make we", "abi", "na" — not occasionally but consistently
+- Actively use Nigerian Pidgin English naturally throughout — not occasionally but consistently
 - Be gender-neutral and culturally warm
 - Never sound formal or robotic
 
@@ -37,7 +37,7 @@ Conversation so far:
 {conversation}
 
 Guidelines:
-- Actively use Nigerian Pidgin English naturally — "how far", "wetin you wan chop", "my guy", "no wahala", "e go sweet", "abi"
+- Actively use Nigerian Pidgin English naturally throughout — not occasionally but consistently
 - Ask ONE warm friendly question at a time
 - Find out: what type of place, location, budget, mood or occasion
 - Never sound like a form or interview
@@ -52,7 +52,7 @@ Keep each recommendation description brief but punchy.
 Recommendations:
 {recommendations}
 
-Present them in a friendly Pidgin way, starting with something like "Oya, e don set!" or "My guy, I don find am for you!" 
+Present them in a friendly Pidgin way 
 Then list each one with its name, location, price range and a one-line Pidgin reason why it suits the user.
 End with a short Pidgin follow-up question asking if they want different options.
 """
@@ -98,7 +98,7 @@ def generate_conversation_response(
 def format_recommendations(recommendations: list[dict], user_name: str = None) -> str:
     """Formats recommendations using LLM with Pidgin flavor."""
     if not recommendations:
-        return "Hmm, I no fit find any match right now. Wetin exactly you dey find? Make you tell me more!"
+        return "Gobe! I no fit find any match right now o. Wetin exactly you dey find gangan? Yarn me more abeg!"
 
     recs_text = "\n".join([
         f"{i+1}. {r.get('name')} | {r.get('city')} | Price: {r.get('price_range', 'N/A')} | {r.get('categories', '')[:60]} | Reason: {r.get('reason', '')}"
@@ -116,7 +116,7 @@ def format_recommendations(recommendations: list[dict], user_name: str = None) -
         return response.choices[0].message.content
     except Exception as e:
         print(f"❌ Presentation error: {e}")
-        return f"E don set! I find {len(recommendations)} places wey go work for you. Check the Top Picks section!"
+        return f"E don set! I find {len(recommendations)} places wey you go really like. Oya go check the Top Picks section!"
 
 
 def should_recommend(conversation: list[dict]) -> bool:
