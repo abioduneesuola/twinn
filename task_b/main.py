@@ -75,5 +75,22 @@ def get_user(user_id: str):
     return profile
 
 
+@app.get("/books/{user_id}")
+def get_book_recommendations(user_id: str):
+    """Returns cross-domain book recommendations based on user's taste profile."""
+    from src.agents.user_modeling import get_or_build_profile
+    from src.agents.retrieval import retrieve_books
+
+    profile = get_or_build_profile(user_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="User profile not found")
+
+    books = retrieve_books(profile, top_k=5)
+    if not books:
+        raise HTTPException(status_code=404, detail="No book recommendations found")
+
+    return {"books": books, "based_on": profile.get("favorite_categories", "your taste")}
+
+
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8002, reload=False)
