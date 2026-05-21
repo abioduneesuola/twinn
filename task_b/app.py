@@ -463,7 +463,8 @@ with col_right:
             for i, book in enumerate(st.session_state.book_recommendations, 1):
                 st.markdown(f"""
                 <div class='book-card'>
-                    <h4><span class='book-rank'>{i}</span>Book #{book.get('book_id')}</h4>
+                    <h4><span class='book-rank'>{i}</span>{book.get('title', f"Book #{book.get('book_id')}")}</h4>
+                    <div style='color:#8a6a50; font-size:0.85rem; font-style:italic; margin-bottom:0.4rem'>by {book.get('author', 'Unknown Author')}</div>
                     <span class='book-tag'>📖 {book.get('genre', '—')}</span>
                     <span class='book-tag'>⭐ {book.get('avg_rating', '—')}</span>
                     <span class='book-tag'>💬 {book.get('review_count', 0)} reviews</span>
