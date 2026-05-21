@@ -1,16 +1,17 @@
-import json
 import sys
-sys.path.append("task_a")
+import os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from src.agents.user_modeling import get_or_build_profile, load_user_reviews
 from src.agents.review_simulation import get_unseen_products, simulate_multiple_reviews
 from src.agents.engagement import present_multiple_results, compute_metrics
 
 
-def run_task_a(user_id: str, n_products: int = 3) -> dict:
+def run_task_a(user_id: str, n_products: int = 3, specific_product: dict = None) -> dict:
     """
     Main Task A pipeline.
     Takes a user ID, simulates reviews for unseen products.
+    Optionally takes a specific product to simulate.
     Returns simulated reviews + metrics.
     """
     print(f"\n🚀 Starting Task A pipeline for user: {user_id}")
@@ -19,15 +20,19 @@ def run_task_a(user_id: str, n_products: int = 3) -> dict:
     print("\n📊 Step 1: Building user profile...")
     profile = get_or_build_profile(user_id)
     if not profile:
-        return {"error": f"The reviews written by user: {user_id} are not rich enough in context, please select another user"}
+        return {"error": f"We found reviews for this user but they are not detailed enough for our system to build a reliable profile. Please select another user with more descriptive review content."}
     print(f"✅ Profile: {profile.get('tone')} | {profile.get('rating_pattern')}")
 
-    # Step 2: Get unseen products
-    print("\n🛍️ Step 2: Getting unseen products...")
-    products = get_unseen_products(user_id, n=n_products)
-    if not products:
-        return {"error": "No unseen products found"}
-    print(f"✅ Found {len(products)} unseen products")
+    # Step 2: Get products to simulate
+    print("\n🛍️ Step 2: Getting products...")
+    if specific_product:
+        products = [specific_product]
+        print(f"✅ Using specified product: {specific_product.get('product_id')}")
+    else:
+        products = get_unseen_products(user_id, n=n_products)
+        if not products:
+            return {"error": "No unseen products found"}
+        print(f"✅ Found {len(products)} unseen products")
 
     # Step 3: Simulate reviews
     print("\n✍️ Step 3: Simulating reviews...")
@@ -53,6 +58,7 @@ def run_task_a(user_id: str, n_products: int = 3) -> dict:
 
 
 if __name__ == "__main__":
+    import sys
     user_id = sys.argv[1] if len(sys.argv) > 1 else "A2TYZ821XXK2YZ"
     result = run_task_a(user_id)
     print("\n=== FINAL OUTPUT ===")
