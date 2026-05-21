@@ -140,10 +140,40 @@ st.markdown("""
         font-size: 1.05rem;
     }
 
+    .book-card {
+        background: linear-gradient(135deg, #f5f0eb, #ede5d8);
+        border: 1px solid #d4a57440;
+        border-radius: 16px;
+        padding: 1.2rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .book-card h4 {
+        color: #4a3728;
+        margin: 0 0 0.5rem 0;
+        font-family: 'Playfair Display', serif;
+        font-size: 1rem;
+    }
+
     .rec-rank {
         display: inline-block;
         background: linear-gradient(135deg, #2d2d2d, #4a3728);
         color: #d4a574;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        text-align: center;
+        line-height: 28px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-right: 0.5rem;
+    }
+
+    .book-rank {
+        display: inline-block;
+        background: linear-gradient(135deg, #4a3728, #6b5040);
+        color: #f5e6d3;
         width: 28px;
         height: 28px;
         border-radius: 50%;
@@ -164,6 +194,17 @@ st.markdown("""
         margin-right: 0.3rem;
         margin-bottom: 0.3rem;
         border: 1px solid #e8ddd4;
+    }
+
+    .book-tag {
+        display: inline-block;
+        background: #d4a57430;
+        color: #4a3728;
+        padding: 0.2rem 0.6rem;
+        border-radius: 20px;
+        font-size: 0.72rem;
+        margin-right: 0.3rem;
+        border: 1px solid #d4a57440;
     }
 
     .profile-box {
@@ -223,6 +264,10 @@ if "profile" not in st.session_state:
     st.session_state.profile = {}
 if "sample_users" not in st.session_state:
     st.session_state.sample_users = []
+if "book_recommendations" not in st.session_state:
+    st.session_state.book_recommendations = []
+if "selected_user_preview" not in st.session_state:
+    st.session_state.selected_user_preview = ""
 
 
 def send_message(message: str) -> dict:
@@ -236,6 +281,20 @@ def send_message(message: str) -> dict:
         return response.json()
     except Exception as e:
         return {"response": f"Connection error: {e}", "reasoning_trace": [], "recommendations": []}
+
+
+def get_book_recommendations() -> list[dict]:
+    try:
+        response = requests.get(
+            f"{API_URL}/books/{st.session_state.user_id}",
+            timeout=60
+        )
+        if response.status_code == 200:
+            return response.json().get("books", [])
+        return []
+    except Exception as e:
+        print(f"Book fetch error: {e}")
+        return []
 
 
 # Sidebar
@@ -257,6 +316,7 @@ with st.sidebar:
                 st.session_state.messages = []
                 st.session_state.reasoning_traces = []
                 st.session_state.recommendations = []
+                st.session_state.book_recommendations = []
                 st.session_state.profile = {}
                 st.rerun()
 
@@ -267,6 +327,7 @@ with st.sidebar:
         st.session_state.user_id = new_id
         st.session_state.conversation = []
         st.session_state.messages = []
+        st.session_state.book_recommendations = []
         st.rerun()
 
     st.divider()
@@ -277,6 +338,7 @@ with st.sidebar:
         st.session_state.messages = []
         st.session_state.reasoning_traces = []
         st.session_state.recommendations = []
+        st.session_state.book_recommendations = []
         st.session_state.profile = {}
         st.session_state.user_id = str(uuid.uuid4())
         st.rerun()
@@ -288,8 +350,8 @@ with col_chat:
     st.markdown("""
     <div class='hero'>
         <div class='hero-badge'>✦ Powered by Twinn AI</div>
-        <h1>Make we find you the place wey go sweet your belle</h1>
-        <p>Recommendations wey fit you well well. E go jus be like say we don sabi you tey tey!</p>
+        <h1>Discover Your Next Favourite Place</h1>
+        <p>Conversational recommendations tailored to your unique taste</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -301,7 +363,7 @@ with col_chat:
                 Start a conversation
             </div>
             <div style='font-size:0.9rem'>
-                Follow me yarn wetin you dey in the mood for, abi make I kukuma surprise you
+                Tell me what you're in the mood for, or let me surprise you
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -342,44 +404,72 @@ with col_chat:
         st.rerun()
 
 with col_right:
-    st.markdown("#### 🔬 Agent Reasoning")
-    if st.session_state.reasoning_traces:
-        trace_items = "".join([f"<div style='margin-bottom:0.4rem'>→ {step}</div>" for step in st.session_state.reasoning_traces])
-        st.markdown(f"<div class='reasoning-box'>{trace_items}</div>", unsafe_allow_html=True)
-    else:
-        st.markdown("<div class='reasoning-box' style='color:#666'>Reasoning trace appears here during recommendations...</div>", unsafe_allow_html=True)
+    # Tabs for different content
+    tab1, tab2, tab3 = st.tabs(["🔬 Reasoning", "✦ Top Picks", "📚 Book Picks"])
 
-    st.markdown("<div style='height:1.5rem'></div>", unsafe_allow_html=True)
+    with tab1:
+        st.markdown("#### Agent Reasoning")
+        if st.session_state.reasoning_traces:
+            trace_items = "".join([f"<div style='margin-bottom:0.4rem'>→ {step}</div>" for step in st.session_state.reasoning_traces])
+            st.markdown(f"<div class='reasoning-box'>{trace_items}</div>", unsafe_allow_html=True)
+        else:
+            st.markdown("<div class='reasoning-box' style='color:#666'>Reasoning trace appears here during recommendations...</div>", unsafe_allow_html=True)
 
-    st.markdown("#### 👁 Taste Profile")
-    profile = st.session_state.profile
-    if profile and profile.get("favorite_categories"):
-        st.markdown(f"""
-        <div class='profile-box'>
-            <b>Loves:</b> {profile.get('favorite_categories', '—')}<br>
-            <b>Budget:</b> {profile.get('price_preference', '—')}<br>
-            <b>Cities:</b> {profile.get('preferred_cities', '—')}<br>
-            <b>Style:</b> {profile.get('dining_style', '—')}<br>
-            <br><i style='color:#888'>{profile.get('personality', '')}</i>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.markdown("<div class='profile-box' style='color:#aaa; text-align:center; padding:2rem'>Profile builds as you chat ✦</div>", unsafe_allow_html=True)
+        st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
 
-    st.markdown("<div style='height:1.5rem'></div>", unsafe_allow_html=True)
-
-    st.markdown("#### ✦ Top Picks")
-    if st.session_state.recommendations:
-        for rec in st.session_state.recommendations:
+        st.markdown("#### 👁 Taste Profile")
+        profile = st.session_state.profile
+        if profile and profile.get("favorite_categories"):
             st.markdown(f"""
-            <div class='rec-card'>
-                <h4><span class='rec-rank'>{rec.get('rank')}</span>{rec.get('name')}</h4>
-                <span class='tag'>📍 {rec.get('city', '—')}</span>
-                <span class='tag'>💰 {rec.get('price_range', '—')}</span>
-                <br>
-                <div style='color:#888; font-size:0.78rem; margin-top:0.4rem'>{str(rec.get('categories', ''))[:80]}</div>
-                <div style='color:#4a3728; font-size:0.83rem; margin-top:0.4rem; font-style:italic'>{str(rec.get('reason', ''))[:130]}</div>
+            <div class='profile-box'>
+                <b>Loves:</b> {profile.get('favorite_categories', '—')}<br>
+                <b>Budget:</b> {profile.get('price_preference', '—')}<br>
+                <b>Cities:</b> {profile.get('preferred_cities', '—')}<br>
+                <b>Style:</b> {profile.get('dining_style', '—')}<br>
+                <br><i style='color:#888'>{profile.get('personality', '')}</i>
             </div>
             """, unsafe_allow_html=True)
-    else:
-        st.markdown("<div style='text-align:center; color:#aaa; padding:2rem'>✦<br>Picks appear here</div>", unsafe_allow_html=True)
+        else:
+            st.markdown("<div class='profile-box' style='color:#aaa; text-align:center; padding:2rem'>Profile builds as you chat ✦</div>", unsafe_allow_html=True)
+
+    with tab2:
+        st.markdown("#### ✦ Top Picks")
+        if st.session_state.recommendations:
+            for rec in st.session_state.recommendations:
+                st.markdown(f"""
+                <div class='rec-card'>
+                    <h4><span class='rec-rank'>{rec.get('rank')}</span>{rec.get('name')}</h4>
+                    <span class='tag'>📍 {rec.get('city', '—')}</span>
+                    <span class='tag'>💰 {rec.get('price_range', '—')}</span>
+                    <br>
+                    <div style='color:#888; font-size:0.78rem; margin-top:0.4rem'>{str(rec.get('categories', ''))[:80]}</div>
+                    <div style='color:#4a3728; font-size:0.83rem; margin-top:0.4rem; font-style:italic'>{str(rec.get('reason', ''))[:130]}</div>
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.markdown("<div style='text-align:center; color:#aaa; padding:2rem'>✦<br>Picks appear here after recommendations</div>", unsafe_allow_html=True)
+
+    with tab3:
+        st.markdown("#### 📚 Book Picks")
+        st.markdown("<div style='color:#888; font-size:0.85rem; margin-bottom:1rem'>Books you might enjoy based on your taste profile</div>", unsafe_allow_html=True)
+
+        if st.button("✦ Find Books For Me", use_container_width=True):
+            with st.spinner("📚 Finding books that match your vibe..."):
+                books = get_book_recommendations()
+                st.session_state.book_recommendations = books
+            st.rerun()
+
+        if st.session_state.book_recommendations:
+            for i, book in enumerate(st.session_state.book_recommendations, 1):
+                st.markdown(f"""
+                <div class='book-card'>
+                    <h4><span class='book-rank'>{i}</span>Book #{book.get('book_id')}</h4>
+                    <span class='book-tag'>📖 {book.get('genre', '—')}</span>
+                    <span class='book-tag'>⭐ {book.get('avg_rating', '—')}</span>
+                    <span class='book-tag'>💬 {book.get('review_count', 0)} reviews</span>
+                    <br>
+                    <div style='color:#6b5040; font-size:0.8rem; margin-top:0.5rem; font-style:italic'>"{book.get('review_summary', '')[:120]}..."</div>
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.markdown("<div style='text-align:center; color:#aaa; padding:2rem'>📚<br>Click above to discover books</div>", unsafe_allow_html=True)
