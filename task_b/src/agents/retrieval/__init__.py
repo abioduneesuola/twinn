@@ -4,9 +4,11 @@ import json
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..'))
 
 from pinecone import Pinecone
-from config import PINECONE_API_KEY, PINECONE_INDEX_NAME
+from supabase import create_client
+from config import PINECONE_API_KEY, PINECONE_INDEX_NAME, SUPABASE_URL, SUPABASE_KEY
 
 pc = Pinecone(api_key=PINECONE_API_KEY)
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 BOOKS_INDEX_NAME = "task-b-books"
 
@@ -77,12 +79,9 @@ def retrieve_books(profile: dict, top_k: int = 5) -> list[dict]:
     Retrieves book recommendations from Goodreads index
     based on user's taste profile.
     """
-    # Build book search query from user profile
     favorite_categories = profile.get("favorite_categories", "")
     personality = profile.get("personality", "")
-    dining_style = profile.get("dining_style", "mixed")
 
-    # Map dining/lifestyle preferences to book genres
     query = f"books for someone who enjoys {favorite_categories} {personality}"
 
     try:
@@ -100,6 +99,20 @@ def retrieve_books(profile: dict, top_k: int = 5) -> list[dict]:
             book = match.metadata.copy()
             book["score"] = round(match.score, 4)
             book["book_id"] = match.id
+
+            # Look up title and author from Supabase
+            try:
+                title_result = supabase.table("goodreads_books").select("title, author").eq("id", match.id).execute()
+                if title_result.data:
+                    book["title"] = title_result.data[0].get("title", f"Book #{match.id}")
+                    book["author"] = title_result.data[0].get("author", "Unknown")
+                else:
+                    book["title"] = f"Book #{match.id}"
+                    book["author"] = "Unknown"
+            except:
+                book["title"] = f"Book #{match.id}"
+                book["author"] = "Unknown"
+
             books.append(book)
 
         print(f"✅ Retrieved {len(books)} book recommendations")
