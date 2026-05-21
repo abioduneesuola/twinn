@@ -125,7 +125,7 @@ with st.sidebar:
     st.markdown("## 🎛️ Controls")
     st.markdown("### 👤 User Selection")
 
-    if st.button("🎲 Get Random Users", use_container_width=True):
+    if st.button("🎲 Fetch Users", use_container_width=True):
         with st.spinner("Fetching quality users..."):
             response = requests.get(f"{API_URL}/sample-users?n=8")
             if response.status_code == 200:
