@@ -1,7 +1,7 @@
 
 # DSN X BCT LLM Agent Challenge — Hackathon 3.0
 
-**Team:** Solo submission  
+**Team:** Trailblazers  
 **Track:** Both Task A (User Modeling) and Task B (Recommendation)  
 **Live Demo:** 
 - Task A: [mytwinn.streamlit.app](https://mytwinn.streamlit.app)
