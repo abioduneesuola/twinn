@@ -8,6 +8,8 @@ from config import PINECONE_API_KEY, PINECONE_INDEX_NAME
 
 pc = Pinecone(api_key=PINECONE_API_KEY)
 
+BOOKS_INDEX_NAME = "task-b-books"
+
 _model = None
 
 
@@ -24,6 +26,10 @@ def get_model():
 
 def get_index():
     return pc.Index(PINECONE_INDEX_NAME)
+
+
+def get_books_index():
+    return pc.Index(BOOKS_INDEX_NAME)
 
 
 def embed_query(text: str) -> list[float]:
@@ -66,6 +72,44 @@ def retrieve_candidates(
         return []
 
 
+def retrieve_books(profile: dict, top_k: int = 5) -> list[dict]:
+    """
+    Retrieves book recommendations from Goodreads index
+    based on user's taste profile.
+    """
+    # Build book search query from user profile
+    favorite_categories = profile.get("favorite_categories", "")
+    personality = profile.get("personality", "")
+    dining_style = profile.get("dining_style", "mixed")
+
+    # Map dining/lifestyle preferences to book genres
+    query = f"books for someone who enjoys {favorite_categories} {personality}"
+
+    try:
+        query_embedding = embed_query(query)
+        index = get_books_index()
+
+        results = index.query(
+            vector=query_embedding,
+            top_k=top_k,
+            include_metadata=True
+        )
+
+        books = []
+        for match in results.matches:
+            book = match.metadata.copy()
+            book["score"] = round(match.score, 4)
+            book["book_id"] = match.id
+            books.append(book)
+
+        print(f"✅ Retrieved {len(books)} book recommendations")
+        return books
+
+    except Exception as e:
+        print(f"❌ Book retrieval error: {e}")
+        return []
+
+
 def retrieve_for_user(profile: dict, top_k: int = 20) -> tuple[list[dict], str]:
     """
     Retrieves candidates based on user profile.
@@ -90,7 +134,8 @@ def retrieve_for_user(profile: dict, top_k: int = 20) -> tuple[list[dict], str]:
     return candidates, reasoning
 
 
-# NOTE: This agent handles semantic search against the Pinecone business
-# index. It converts the user's profile into a search query, embeds it
-# using the same model used during indexing, and retrieves the most
-# semantically similar businesses as candidates for ranking.
+# NOTE: This agent handles semantic search against both the Pinecone
+# business index (Yelp) and the books index (Goodreads). It converts
+# user profiles into search queries and retrieves semantically similar
+# candidates for ranking. The books retrieval enables cross-domain
+# recommendations as a side feature in the UI.
