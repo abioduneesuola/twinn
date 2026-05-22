@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import random
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..'))
 
 from pinecone import Pinecone
@@ -77,24 +78,29 @@ def retrieve_candidates(
 def retrieve_books(profile: dict, top_k: int = 5) -> list[dict]:
     """
     Retrieves book recommendations from Goodreads index
-    based on user's taste profile.
+    based on user's taste profile. Fetches top 20 candidates
+    then randomly samples 5 to provide variety while staying
+    personalized.
     """
     favorite_categories = profile.get("favorite_categories", "")
     personality = profile.get("personality", "")
+    dining_style = profile.get("dining_style", "")
+    price_preference = profile.get("price_preference", "")
 
-    query = f"books for someone who enjoys {favorite_categories} {personality}"
+    query = f"books for someone who enjoys {favorite_categories} {personality} {dining_style} {price_preference}"
 
     try:
         query_embedding = embed_query(query)
         index = get_books_index()
 
+        # Fetch larger pool then sample for variety
         results = index.query(
             vector=query_embedding,
-            top_k=top_k,
+            top_k=20,
             include_metadata=True
         )
 
-        books = []
+        candidates = []
         for match in results.matches:
             book = match.metadata.copy()
             book["score"] = round(match.score, 4)
@@ -113,10 +119,16 @@ def retrieve_books(profile: dict, top_k: int = 5) -> list[dict]:
                 book["title"] = f"Book #{match.id}"
                 book["author"] = "Unknown"
 
-            books.append(book)
+            candidates.append(book)
 
-        print(f"✅ Retrieved {len(books)} book recommendations")
-        return books
+        # Randomly sample top_k from candidates for variety
+        if len(candidates) > top_k:
+            sampled = random.sample(candidates, top_k)
+        else:
+            sampled = candidates
+
+        print(f"✅ Retrieved {len(sampled)} book recommendations from pool of {len(candidates)}")
+        return sampled
 
     except Exception as e:
         print(f"❌ Book retrieval error: {e}")
