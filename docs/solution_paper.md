@@ -1,7 +1,3 @@
-Here's the full solution paper:
-
----
-
 # DSN X BCT LLM Agent Challenge 3.0
 ## Solution Paper: LLM-Powered User Modeling and Intelligent Recommendation
 
