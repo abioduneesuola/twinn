@@ -4,7 +4,7 @@
 **Team:** Trailblazers  
 **Track:** Both Task A (User Modeling) and Task B (Recommendation)  
 **Live Demo:** 
-- Task A: [mytwinn.streamlit.app](https://mytwinn.streamlit.app)
+- Task A: [mytwinn01.streamlit.app](https://mytwinn.streamlit.app)
 - Task B: [mytwinn02.streamlit.app](https://mytwinn02.streamlit.app)
 
 ---
