@@ -97,7 +97,7 @@ All string values must use only single sentences with no special characters or i
     for attempt in range(3):
         try:
             response = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model="qwen/qwen3.6-27b",
                 messages=[
                     {
                         "role": "system",
